@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enterprise Scaling Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f3ef;
+    --bg2: #ffffff;
+    --bg3: #f0eeea;
+    --bg4: #e8e6e1;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+    --text: #1a1a18;
+    --text2: #5a5a54;
+    --text3: #9a9890;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+
+    --phase1: #5244c8;
+    --phase1bg: rgba(82,68,200,0.07);
+    --phase1muted: rgba(82,68,200,0.18);
+
+    --phase2: #0d8f6a;
+    --phase2bg: rgba(13,143,106,0.07);
+    --phase2muted: rgba(13,143,106,0.18);
+
+    --phase3: #1470c2;
+    --phase3bg: rgba(20,112,194,0.07);
+    --phase3muted: rgba(20,112,194,0.18);
+
+    --phase4: #b87010;
+    --phase4bg: rgba(184,112,16,0.07);
+    --phase4muted: rgba(184,112,16,0.18);
+
+    --phase5: #c4401f;
+    --phase5bg: rgba(196,64,31,0.07);
+    --phase5muted: rgba(196,64,31,0.18);
+
+    --phase6: #2e7d32;
+    --phase6bg: rgba(46,125,50,0.07);
+    --phase6muted: rgba(46,125,50,0.18);
+  }
+
+  html { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
+  body { min-height: 100vh; padding: 32px; max-width: 1280px; margin: 0 auto; }
+
+  /* Header */
+  .header { margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .header-left h1 { font-size: 20px; font-weight: 500; letter-spacing: -0.02em; color: var(--text); }
+  .header-left p { font-size: 13px; color: var(--text2); margin-top: 4px; font-weight: 300; }
+  .header-badge { font-family: var(--mono); font-size: 11px; color: var(--text3); background: var(--bg3); border: 1px solid var(--border); padding: 5px 10px; border-radius: 4px; }
+
+  /* KPI Strip */
+  .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; position: relative; overflow: hidden; }
+  .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent, var(--phase1)); opacity: 0.6; }
+  .kpi-label { font-size: 11px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .kpi-value { font-size: 28px; font-weight: 300; letter-spacing: -0.03em; color: var(--text); line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--text2); margin-top: 5px; }
+
+  /* Main Grid */
+  .main-grid { display: grid; grid-template-columns: 280px 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* Phase Sidebar */
+  .sidebar { display: flex; flex-direction: column; gap: 4px; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .card-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+  .card-header-label { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
+  .phase-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; transition: background 0.15s; border: none; background: none; width: 100%; text-align: left; color: var(--text); border-left: 2px solid transparent; }
+  .phase-btn:hover { background: var(--bg3); }
+  .phase-btn.active { background: var(--bg3); border-left-color: var(--phase-color); }
+  .phase-num { font-family: var(--mono); font-size: 10px; color: var(--text3); width: 18px; flex-shrink: 0; }
+  .phase-info { flex: 1; min-width: 0; }
+  .phase-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .phase-range { font-size: 10px; color: var(--text3); margin-top: 1px; font-family: var(--mono); }
+  .phase-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--phase-color); flex-shrink: 0; }
+
+  /* Detail Panel */
+  .detail-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; min-height: 340px; }
+  .detail-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+  .detail-phase-num { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 4px; margin-bottom: 8px; display: inline-block; }
+  .detail-title { font-size: 18px; font-weight: 500; letter-spacing: -0.02em; color: var(--text); }
+  .detail-time { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .detail-value-badge { font-size: 11px; padding: 6px 12px; border-radius: 6px; line-height: 1.5; max-width: 260px; text-align: right; }
+  .detail-desc { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 20px; font-weight: 300; }
+  .section-label { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+  .chip { font-size: 12px; padding: 5px 10px; border-radius: 5px; }
+  .chip-action { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+  .chip-output { border: 1px solid; font-family: var(--mono); font-size: 11px; }
+
+  /* Timeline bar */
+  .timeline-track { background: var(--bg3); border-radius: 3px; height: 5px; margin-top: 16px; position: relative; overflow: hidden; }
+  .timeline-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+  /* Bottom Row */
+  .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Vs Table */
+  .vs-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+  .vs-col-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .vs-item { font-size: 12px; color: var(--text2); padding: 7px 10px; border-radius: 5px; margin-bottom: 5px; font-weight: 300; }
+  .vs-item.pilot { background: var(--bg3); border: 1px solid var(--border); }
+  .vs-item.enterprise { background: rgba(20,112,194,0.06); border: 1px solid rgba(20,112,194,0.15); color: #1470c2; }
+
+  /* Pillars */
+  .pillars-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 16px; }
+  .pillar { padding: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 7px; }
+  .pillar-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .pillar-desc { font-size: 11px; color: var(--text3); font-weight: 300; }
+
+  /* Transitions */
+  .fade-in { animation: fadeIn 0.25s ease forwards; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Enterprise Scaling Dashboard</h1>
+    <p>Transforming R&D pilots and prototypes into mission-ready, enterprise-wide capabilities</p>
+  </div>
+  <div class="header-badge">TA // Internal Strategy</div>
+</div>
+
+<div class="kpi-strip">
+  <div class="kpi" style="--accent:var(--phase1)">
+    <div class="kpi-label">Total timeline</div>
+    <div class="kpi-value">18<span style="font-size:16px;color:var(--text2)">+ mo</span></div>
+    <div class="kpi-sub">end-to-end engagement</div>
+  </div>
+  <div class="kpi" style="--accent:var(--phase3)">
+    <div class="kpi-label">Phases</div>
+    <div class="kpi-value">6</div>
+    <div class="kpi-sub">structured milestones</div>
+  </div>
+  <div class="kpi" style="--accent:var(--phase4)">
+    <div class="kpi-label">Architecture pillars</div>
+    <div class="kpi-value">6</div>
+    <div class="kpi-sub">required for enterprise readiness</div>
+  </div>
+  <div class="kpi" style="--accent:var(--phase6)">
+    <div class="kpi-label">Outcome</div>
+    <div class="kpi-value" style="font-size:18px;padding-top:4px;">Mission impact</div>
+    <div class="kpi-sub">from lab-ready to enterprise-ready</div>
+  </div>
+</div>
+
+<div class="main-grid">
+  <div class="card sidebar">
+    <div class="card-header"><div class="card-header-label">Scaling phases</div></div>
+    <div id="phase-list"></div>
+  </div>
+  <div class="detail-card" id="detail-panel"></div>
+</div>
+
+<div class="bottom-grid">
+  <div class="card">
+    <div class="card-header"><div class="card-header-label">Pilot vs. enterprise</div></div>
+    <div class="vs-cols">
+      <div>
+        <div class="vs-col-label" style="color:var(--text3)">Pilots designed for</div>
+        <div class="vs-item pilot">Exploration & learning</div>
+        <div class="vs-item pilot">Technical validation</div>
+        <div class="vs-item pilot">Limited, controlled scope</div>
+        <div class="vs-item pilot">Research team ownership</div>
+      </div>
+      <div>
+        <div class="vs-col-label" style="color:#4da6f5">Enterprise must deliver</div>
+        <div class="vs-item enterprise">Reliability under load & stress</div>
+        <div class="vs-item enterprise">Security & compliance at scale</div>
+        <div class="vs-item enterprise">Repeatability across missions</div>
+        <div class="vs-item enterprise">Workforce-owned sustainment</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-header-label">Architecture pillars</div></div>
+    <div class="pillars-grid">
+      <div class="pillar"><div class="pillar-name">Architecture</div><div class="pillar-desc">Common APIs & data models</div></div>
+      <div class="pillar"><div class="pillar-name">Hardening</div><div class="pillar-desc">Cybersecurity & resilience</div></div>
+      <div class="pillar"><div class="pillar-name">Governance</div><div class="pillar-desc">Lifecycle & compliance</div></div>
+      <div class="pillar"><div class="pillar-name">Integration</div><div class="pillar-desc">Enterprise identity & data</div></div>
+      <div class="pillar"><div class="pillar-name">Change mgmt</div><div class="pillar-desc">Training & adoption</div></div>
+      <div class="pillar"><div class="pillar-name">Sustainment</div><div class="pillar-desc">Ownership & funding</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const phases = [
+  {
+    num: "01", name: "Align to priorities", time: "Month 0–1",
+    color: "var(--phase1)", bg: "var(--phase1bg)", muted: "var(--phase1muted)", hex: "#5244c8",
+    progress: 6,
+    desc: "Map pilots to strategic priorities and validated problem statements. Ensure scaling efforts directly support mission priorities before any resources are committed.",
+    actions: ["Map pilots to strategic priorities", "Validate problem statements with mission owners", "Identify individual vs. modular pathways", "Establish enterprise-level KPIs"],
+    outputs: ["Prioritized capability list", "Mission alignment matrix", "Enterprise scaling charter"],
+    value: "Ensures resources focus on mission-critical needs"
+  },
+  {
+    num: "02", name: "Assess readiness", time: "Month 1–2",
+    color: "var(--phase2)", bg: "var(--phase2bg)", muted: "var(--phase2muted)", hex: "#0d8f6a",
+    progress: 12,
+    desc: "Evaluate technical maturity, security posture, integration requirements, and operational risks for both individual and modular capabilities before committing to scale.",
+    actions: ["Assess architecture, data, and security posture", "Identify resilience and interoperability gaps", "Map interdependencies for modular capabilities", "Conduct risk and accreditation readiness assessment"],
+    outputs: ["Technical readiness assessment", "Integration & interoperability map", "Risk & compliance gap analysis"],
+    value: "Provides a clear view of risk, cost, and feasibility"
+  },
+  {
+    num: "03", name: "Design architecture", time: "Month 2–4",
+    color: "var(--phase3)", bg: "var(--phase3bg)", muted: "var(--phase3muted)", hex: "#1470c2",
+    progress: 25,
+    desc: "Define enterprise patterns, data models, APIs, and governance structures to ensure all scaled capabilities are repeatable, secure, and compliant across the organization.",
+    actions: ["Define enterprise patterns, APIs, and data models", "Establish governance for lifecycle and accreditation", "Create modular architecture standards", "Define sustainment and ownership model"],
+    outputs: ["Enterprise architecture blueprint", "Governance framework", "Sustainment & ownership model"],
+    value: "Creates the foundation for repeatable, secure scaling"
+  },
+  {
+    num: "04", name: "Harden & integrate", time: "Month 4–8",
+    color: "var(--phase4)", bg: "var(--phase4bg)", muted: "var(--phase4muted)", hex: "#b87010",
+    progress: 50,
+    desc: "Transform pilots into resilient, secure, and interoperable enterprise capabilities through cybersecurity hardening, system integration, and contested environment testing.",
+    actions: ["Implement cybersecurity controls and monitoring", "Integrate with enterprise identity and data platforms", "Conduct load, red team, and failover testing", "Build shared services for modular capability families"],
+    outputs: ["Enterprise-ready capability release", "Integration test results", "Resilience & security certification"],
+    value: "Ensures capabilities are mission-ready, not lab-ready"
+  },
+  {
+    num: "05", name: "Deploy & enable", time: "Month 8–12",
+    color: "var(--phase5)", bg: "var(--phase5bg)", muted: "var(--phase5muted)", hex: "#c4401f",
+    progress: 76,
+    desc: "Roll out capabilities across the enterprise with full training, change management, and operational readiness processes to drive adoption and measurable mission impact.",
+    actions: ["Roll out across sites, missions, and business units", "Train users, operators, and sustainment teams", "Implement enterprise-wide SLAs and support processes", "Monitor adoption and mission impact metrics"],
+    outputs: ["Enterprise deployment package", "Training & adoption materials", "Operational readiness certification"],
+    value: "Delivers measurable enterprise impact"
+  },
+  {
+    num: "06", name: "Expand & improve", time: "Month 12–18+",
+    color: "var(--phase6)", bg: "var(--phase6bg)", muted: "var(--phase6muted)", hex: "#2e7d32",
+    progress: 100,
+    desc: "Mature capabilities through continuous performance monitoring, modular expansion, and lessons-learned institutionalization. Build long-term capability ecosystems, not one-off tools.",
+    actions: ["Collect performance data and user feedback", "Enhance features, resilience, and interoperability", "Add new modules and integrate capabilities", "Institutionalize lessons learned into playbooks"],
+    outputs: ["Updated capability roadmap", "Modular capability expansion plan", "Enterprise scaling playbook"],
+    value: "Builds long-term capability ecosystems, not one-off tools"
+  }
+];
+
+let active = 0;
+
+function renderList() {
+  document.getElementById('phase-list').innerHTML = phases.map((p, i) => `
+    <button class="phase-btn ${i === active ? 'active' : ''}" style="--phase-color:${p.color}" onclick="select(${i})">
+      <span class="phase-num">${p.num}</span>
+      <span class="phase-info">
+        <span class="phase-name">${p.name}</span>
+        <span class="phase-range">${p.time}</span>
+      </span>
+      <span class="phase-dot" style="background:${p.color}"></span>
+    </button>
+  `).join('');
+}
+
+function renderDetail(i) {
+  const p = phases[i];
+  const actions = p.actions.map(a => `<span class="chip chip-action">${a}</span>`).join('');
+  const outputs = p.outputs.map(o => `<span class="chip chip-output" style="color:${p.color};border-color:${p.muted};background:${p.bg}">${o}</span>`).join('');
+  document.getElementById('detail-panel').innerHTML = `
+    <div class="fade-in">
+      <div class="detail-top">
+        <div>
+          <span class="detail-phase-num" style="background:${p.bg};color:${p.color};font-family:var(--mono)">Phase ${p.num}</span>
+          <div class="detail-title">${p.name}</div>
+          <div class="detail-time">${p.time}</div>
+        </div>
+        <div class="detail-value-badge" style="background:${p.bg};color:${p.color};border:1px solid ${p.muted}">
+          ${p.value}
+        </div>
+      </div>
+      <p class="detail-desc">${p.desc}</p>
+      <div class="section-label">Key actions</div>
+      <div class="chips">${actions}</div>
+      <div class="section-label">Outputs</div>
+      <div class="chips">${outputs}</div>
+      <div class="timeline-track">
+        <div class="timeline-fill" style="width:${p.progress}%;background:${p.color};opacity:0.7"></div>
+      </div>
+    </div>
+  `;
+}
+
+function select(i) {
+  active = i;
+  renderList();
+  renderDetail(i);
+}
+
+renderList();
+renderDetail(0);
+</script>
+</body>
+</html>
